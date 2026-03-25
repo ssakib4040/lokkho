@@ -106,6 +106,46 @@ const templates = [
   "Design onboarding prompts for first-time team admins.",
 ];
 
+const modelOptions: {
+  value: ModelName;
+  label: string;
+  provider: string;
+  Icon: typeof Bot;
+}[] = [
+  {
+    value: "GPT-5.3-Codex",
+    label: "GPT-5.3-Codex",
+    provider: "OpenAI",
+    Icon: Sparkles,
+  },
+  { value: "GPT-4.1", label: "GPT-4.1", provider: "OpenAI", Icon: Brain },
+  { value: "GPT-4o", label: "GPT-4o", provider: "OpenAI", Icon: Rocket },
+  {
+    value: "Claude Sonnet",
+    label: "Claude Sonnet",
+    provider: "Anthropic",
+    Icon: Bot,
+  },
+  {
+    value: "Claude 3.7 Sonnet",
+    label: "Claude 3.7 Sonnet",
+    provider: "Anthropic",
+    Icon: Wand2,
+  },
+  {
+    value: "Gemini 2.0 Flash",
+    label: "Gemini 2.0 Flash",
+    provider: "Google",
+    Icon: Gauge,
+  },
+  {
+    value: "Llama 3.3 70B",
+    label: "Llama 3.3 70B",
+    provider: "Meta",
+    Icon: Workflow,
+  },
+];
+
 function makeId(prefix: string): string {
   return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
 }
@@ -216,6 +256,8 @@ export default function Home() {
   const [model, setModel] = useState<ModelName>("GPT-5.3-Codex");
   const [range, setRange] = useState<TimeRange>("7d");
   const [profileBusy, setProfileBusy] = useState<boolean>(false);
+  const currentModel =
+    modelOptions.find((option) => option.value === model) ?? modelOptions[0];
 
   // Header sheet form state for creating a workspace.
   const [workspaceOpen, setWorkspaceOpen] = useState<boolean>(false);
@@ -1084,26 +1126,40 @@ export default function Home() {
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Select
-                    value={model}
-                    onValueChange={(value) => {
-                      setModel(value as ModelName);
-                      toast.info("Model switched", { description: value });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="GPT-5.3-Codex">
-                        GPT-5.3-Codex
-                      </SelectItem>
-                      <SelectItem value="GPT-4.1">GPT-4.1</SelectItem>
-                      <SelectItem value="Claude Sonnet">
-                        Claude Sonnet
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="h-8 gap-2">
+                        <currentModel.Icon className="size-3.5" />
+                        <span>{currentModel.label}</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-64">
+                      <DropdownMenuLabel>Choose AI Model</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuRadioGroup
+                        value={model}
+                        onValueChange={(value) => {
+                          setModel(value as ModelName);
+                          toast.info("Model switched", { description: value });
+                        }}
+                      >
+                        {modelOptions.map((option) => (
+                          <DropdownMenuRadioItem
+                            key={option.value}
+                            value={option.value}
+                          >
+                            <option.Icon className="size-3.5" />
+                            <div className="flex flex-col leading-tight">
+                              <span>{option.label}</span>
+                              <span className="text-[11px] text-muted-foreground">
+                                {option.provider}
+                              </span>
+                            </div>
+                          </DropdownMenuRadioItem>
+                        ))}
+                      </DropdownMenuRadioGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <Tooltip>
                     <TooltipTrigger asChild>

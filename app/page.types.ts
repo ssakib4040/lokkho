@@ -1,4 +1,11 @@
-export type ModelName = "GPT-5.3-Codex" | "GPT-4.1" | "Claude Sonnet";
+export type ModelName =
+  | "GPT-5.3-Codex"
+  | "GPT-4.1"
+  | "GPT-4o"
+  | "Claude Sonnet"
+  | "Claude 3.7 Sonnet"
+  | "Gemini 2.0 Flash"
+  | "Llama 3.3 70B";
 export type MessageRole = "user" | "assistant";
 export type JobStatus = "idle" | "running" | "paused";
 export type TimeRange = "24h" | "7d" | "30d";
