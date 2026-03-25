@@ -41,6 +41,9 @@ export interface ChatMessage {
   progress?: AgentProgressData;
   code?: string;
   bullets?: string[];
+  timestamp?: Date;
+  status?: "sent" | "delivered" | "read";
+  reactions?: { emoji: string; count: number }[];
 }
 
 export interface Conversation {

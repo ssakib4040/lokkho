@@ -7,10 +7,13 @@ import {
   Bot,
   Brain,
   CheckCircle2,
+  Check,
+  CheckCheck,
   CircleCheck,
   ClipboardList,
   Code2,
   Clock3,
+  Copy,
   CreditCard,
   Database,
   FilePlus2,
@@ -27,6 +30,7 @@ import {
   Rocket,
   Search,
   Settings,
+  Smile,
   Sparkles,
   StopCircle,
   Sun,
@@ -492,7 +496,7 @@ export default function Home() {
 
   const sendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     const trimmed = composer.trim();
     if (!trimmed) return;
 
@@ -513,6 +517,8 @@ export default function Home() {
       id: makeId("msg"),
       role: "user",
       text: trimmed,
+      timestamp: new Date(),
+      status: "sent",
     };
 
     setComposerLoading(true);
@@ -539,9 +545,24 @@ export default function Home() {
       }),
     );
 
+    const nextMessagesWithReadStatus: ChatMessage[] = nextMessages.map(
+      (message): ChatMessage =>
+        message.id === userMessage.id
+          ? { ...message, status: "read" }
+          : message,
+    );
+
+    const assistantMessagesWithMeta: ChatMessage[] = assistantMessages.map(
+      (message): ChatMessage => ({
+        ...message,
+        timestamp: new Date(),
+        status: "read",
+      }),
+    );
+
     setConversationMessages(conversation.id, [
-      ...nextMessages,
-      ...assistantMessages,
+      ...nextMessagesWithReadStatus,
+      ...assistantMessagesWithMeta,
     ]);
     setComposerLoading(false);
     pushActivity(`Assistant replied using ${model}`, "chat");
@@ -782,6 +803,31 @@ export default function Home() {
         {value}
       </Badge>
     );
+  };
+
+  // Helper: Format time ago (e.g., "2m ago", "5s ago")
+  const formatTimeAgo = (date: Date | undefined): string => {
+    if (!date) return "just now";
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return date.toLocaleDateString();
+  };
+
+  // Helper: Get status icon
+  const getStatusIcon = (status: "sent" | "delivered" | "read" | undefined) => {
+    switch (status) {
+      case "read":
+        return <CheckCheck className="w-3.5 h-3.5 text-blue-500" />;
+      case "delivered":
+        return <Check className="w-3.5 h-3.5 text-gray-400" />;
+      case "sent":
+        return <Clock3 className="w-3.5 h-3.5 text-gray-300" />;
+      default:
+        return null;
+    }
   };
 
   const renderAssistantMessage = (message: ChatMessage) => {
@@ -1248,92 +1294,171 @@ export default function Home() {
                   <ScrollArea className="min-h-0 flex-1 rounded-lg border border-border/70 bg-background/70 p-3">
                     {activeConversation &&
                     activeConversation.messages.length > 0 ? (
-                      <div className="grid gap-3">
-                        {activeConversation.messages.map((message) => (
-                          <div
-                            key={message.id}
-                            className={`flex items-end gap-3 w-full ${
-                              message.role === "user" ? "justify-end" : ""
-                            }`}
-                          >
-                            {message.role === "assistant" && (
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">
-                                  AI
-                                </AvatarFallback>
-                              </Avatar>
-                            )}
+                      <div className="grid gap-5">
+                        {activeConversation.messages.map((message, index) => {
+                          const previousMessage =
+                            index > 0
+                              ? activeConversation.messages[index - 1]
+                              : undefined;
+                          const nextMessage =
+                            index < activeConversation.messages.length - 1
+                              ? activeConversation.messages[index + 1]
+                              : undefined;
+                          const showAvatar =
+                            message.role === "assistant" &&
+                            previousMessage?.role !== "assistant";
+                          const isLastFromRole =
+                            !nextMessage || nextMessage.role !== message.role;
+
+                          return (
                             <div
-                              className={`rounded-2xl px-4 py-2.5 max-w-md ${
-                                message.role === "user"
-                                  ? "bg-primary text-primary-foreground rounded-br-none"
-                                  : "bg-card border border-border/70 rounded-bl-none"
-                              }`}
+                              key={message.id}
+                              className="animate-in fade-in slide-in-from-bottom-2 duration-300"
                             >
-                              {message.role === "assistant" ? (
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
-                                      Assistant
-                                    </p>
-                                    {getTypeBadge(message.messageType)}
+                              <div
+                                className={`group flex w-full items-end gap-3 ${
+                                  message.role === "user" ? "justify-end" : ""
+                                }`}
+                              >
+                                {showAvatar ? (
+                                  <Avatar className="h-8 w-8 shrink-0 ring-1 ring-border/70">
+                                    <AvatarFallback className="text-xs">
+                                      AI
+                                    </AvatarFallback>
+                                  </Avatar>
+                                ) : message.role === "assistant" ? (
+                                  <div className="w-8" />
+                                ) : null}
+
+                                <div className="flex max-w-[75%] flex-col gap-1.5">
+                                  <div
+                                    className={`relative rounded-2xl px-4 py-2.5 transition-all ${
+                                      message.role === "user"
+                                        ? "rounded-br-none bg-primary text-primary-foreground shadow-sm"
+                                        : "rounded-bl-none border border-border/70 bg-card shadow-sm"
+                                    }`}
+                                  >
+                                    {message.role === "assistant" ? (
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                            Assistant
+                                          </p>
+                                          {getTypeBadge(message.messageType)}
+                                        </div>
+                                        <div className="grid gap-2">
+                                          {(message.messageType ??
+                                            "regular") === "regular" ? (
+                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                              <FileText className="size-3.5" />
+                                              <span>Regular response</span>
+                                            </div>
+                                          ) : null}
+                                          {(message.messageType ??
+                                            "regular") === "task" ? (
+                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                              <ListTodo className="size-3.5" />
+                                              <span>Single task update</span>
+                                            </div>
+                                          ) : null}
+                                          {(message.messageType ??
+                                            "regular") === "progress" ? (
+                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                              <Gauge className="size-3.5" />
+                                              <span>Progress checkpoint</span>
+                                            </div>
+                                          ) : null}
+                                          {(message.messageType ??
+                                            "regular") === "tasks" ? (
+                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                              <ClipboardList className="size-3.5" />
+                                              <span>Task list</span>
+                                            </div>
+                                          ) : null}
+                                          {(message.messageType ??
+                                            "regular") === "warning" ? (
+                                            <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-500">
+                                              <AlertTriangle className="size-3.5" />
+                                              <span>Warning</span>
+                                            </div>
+                                          ) : null}
+                                          {(message.messageType ??
+                                            "regular") === "code" ? (
+                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                              <Code2 className="size-3.5" />
+                                              <span>Code block</span>
+                                            </div>
+                                          ) : null}
+                                          {renderAssistantMessage(message)}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-sm leading-relaxed break-words">
+                                        {message.text}
+                                      </p>
+                                    )}
                                   </div>
-                                  <div className="grid gap-2">
-                                    {(message.messageType ?? "regular") ===
-                                    "regular" ? (
-                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                        <FileText className="size-3.5" />
-                                        <span>Regular response</span>
-                                      </div>
+
+                                  <div
+                                    className={`flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 ${
+                                      message.role === "user"
+                                        ? "justify-end"
+                                        : ""
+                                    }`}
+                                  >
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(
+                                          message.text,
+                                        );
+                                        toast.success("Copied message");
+                                      }}
+                                    >
+                                      <Copy className="size-3.5" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      onClick={() =>
+                                        toast.success("Reaction added: 👍")
+                                      }
+                                    >
+                                      <Smile className="size-3.5" />
+                                    </Button>
+                                  </div>
+
+                                  <div
+                                    className={`flex items-center gap-1 text-[11px] text-muted-foreground ${
+                                      message.role === "user"
+                                        ? "justify-end"
+                                        : "justify-start"
+                                    }`}
+                                  >
+                                    <span>
+                                      {formatTimeAgo(message.timestamp)}
+                                    </span>
+                                    {message.role === "user" &&
+                                    isLastFromRole ? (
+                                      <>
+                                        <span>•</span>
+                                        {getStatusIcon(message.status)}
+                                        <span>{message.status ?? "sent"}</span>
+                                      </>
                                     ) : null}
-                                    {(message.messageType ?? "regular") ===
-                                    "task" ? (
-                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                        <ListTodo className="size-3.5" />
-                                        <span>Single task update</span>
-                                      </div>
-                                    ) : null}
-                                    {(message.messageType ?? "regular") ===
-                                    "progress" ? (
-                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                        <Gauge className="size-3.5" />
-                                        <span>Progress checkpoint</span>
-                                      </div>
-                                    ) : null}
-                                    {(message.messageType ?? "regular") ===
-                                    "tasks" ? (
-                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                        <ClipboardList className="size-3.5" />
-                                        <span>Task list</span>
-                                      </div>
-                                    ) : null}
-                                    {(message.messageType ?? "regular") ===
-                                    "warning" ? (
-                                      <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-500">
-                                        <AlertTriangle className="size-3.5" />
-                                        <span>Warning</span>
-                                      </div>
-                                    ) : null}
-                                    {(message.messageType ?? "regular") ===
-                                    "code" ? (
-                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                        <Code2 className="size-3.5" />
-                                        <span>Code block</span>
-                                      </div>
-                                    ) : null}
-                                    {renderAssistantMessage(message)}
                                   </div>
                                 </div>
-                              ) : (
-                                <p className="text-sm leading-relaxed break-words">
-                                  {message.text}
-                                </p>
-                              )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                         {composerLoading && (
-                          <div className="flex items-end gap-3 w-full">
+                          <div className="animate-in fade-in duration-300 flex items-end gap-3 w-full">
                             <Avatar className="h-8 w-8">
                               <AvatarFallback className="text-xs">
                                 AI
