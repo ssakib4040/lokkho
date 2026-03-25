@@ -492,17 +492,21 @@ export default function Home() {
 
   const sendMessage = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!activeConversation) {
-      toast.error("Create or select a conversation first");
-      return;
-    }
-
+    
     const trimmed = composer.trim();
-    if (trimmed.length < 4) {
-      toast.error("Message is too short", {
-        description: "Please use at least 4 characters.",
-      });
-      return;
+    if (!trimmed) return;
+
+    // Use active conversation or create a new one
+    let conversation = activeConversation;
+    if (!conversation) {
+      const created: Conversation = {
+        id: makeId("conv"),
+        title: `Discovery thread ${conversations.length + 1}`,
+        messages: [],
+      };
+      setConversations((previous) => [created, ...previous]);
+      conversation = created;
+      setActiveConversationId(created.id);
     }
 
     const userMessage: ChatMessage = {
@@ -514,8 +518,8 @@ export default function Home() {
     setComposerLoading(true);
     setComposer("");
 
-    const nextMessages = [...activeConversation.messages, userMessage];
-    setConversationMessages(activeConversation.id, nextMessages);
+    const nextMessages = [...conversation.messages, userMessage];
+    setConversationMessages(conversation.id, nextMessages);
 
     await new Promise((resolve) => setTimeout(resolve, 900));
 
@@ -535,7 +539,7 @@ export default function Home() {
       }),
     );
 
-    setConversationMessages(activeConversation.id, [
+    setConversationMessages(conversation.id, [
       ...nextMessages,
       ...assistantMessages,
     ]);
@@ -1248,70 +1252,80 @@ export default function Home() {
                         {activeConversation.messages.map((message) => (
                           <div
                             key={message.id}
-                            className="flex items-start gap-2"
+                            className={`flex items-end gap-3 w-full ${
+                              message.role === "user" ? "justify-end" : ""
+                            }`}
                           >
-                            <Avatar>
-                              <AvatarFallback>
-                                {message.role === "assistant" ? "AI" : "ME"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="rounded-lg border border-border/70 bg-card px-3 py-2">
-                              <div className="mb-2 flex items-center gap-2">
-                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                  {message.role}
-                                </p>
-                                {message.role === "assistant"
-                                  ? getTypeBadge(message.messageType)
-                                  : null}
-                              </div>
+                            {message.role === "assistant" && (
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs">
+                                  AI
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                            <div
+                              className={`rounded-2xl px-4 py-2.5 max-w-md ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground rounded-br-none"
+                                  : "bg-card border border-border/70 rounded-bl-none"
+                              }`}
+                            >
                               {message.role === "assistant" ? (
-                                <div className="grid gap-2">
-                                  {(message.messageType ?? "regular") ===
-                                  "regular" ? (
-                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                      <FileText className="size-3.5" />
-                                      <span>Regular response</span>
-                                    </div>
-                                  ) : null}
-                                  {(message.messageType ?? "regular") ===
-                                  "task" ? (
-                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                      <ListTodo className="size-3.5" />
-                                      <span>Single task update</span>
-                                    </div>
-                                  ) : null}
-                                  {(message.messageType ?? "regular") ===
-                                  "progress" ? (
-                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                      <Gauge className="size-3.5" />
-                                      <span>Progress checkpoint</span>
-                                    </div>
-                                  ) : null}
-                                  {(message.messageType ?? "regular") ===
-                                  "tasks" ? (
-                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                      <ClipboardList className="size-3.5" />
-                                      <span>Task list</span>
-                                    </div>
-                                  ) : null}
-                                  {(message.messageType ?? "regular") ===
-                                  "warning" ? (
-                                    <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-500">
-                                      <AlertTriangle className="size-3.5" />
-                                      <span>Warning</span>
-                                    </div>
-                                  ) : null}
-                                  {(message.messageType ?? "regular") ===
-                                  "code" ? (
-                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                      <Code2 className="size-3.5" />
-                                      <span>Code block</span>
-                                    </div>
-                                  ) : null}
-                                  {renderAssistantMessage(message)}
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-[11px] uppercase tracking-wide font-semibold text-muted-foreground">
+                                      Assistant
+                                    </p>
+                                    {getTypeBadge(message.messageType)}
+                                  </div>
+                                  <div className="grid gap-2">
+                                    {(message.messageType ?? "regular") ===
+                                    "regular" ? (
+                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                        <FileText className="size-3.5" />
+                                        <span>Regular response</span>
+                                      </div>
+                                    ) : null}
+                                    {(message.messageType ?? "regular") ===
+                                    "task" ? (
+                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                        <ListTodo className="size-3.5" />
+                                        <span>Single task update</span>
+                                      </div>
+                                    ) : null}
+                                    {(message.messageType ?? "regular") ===
+                                    "progress" ? (
+                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                        <Gauge className="size-3.5" />
+                                        <span>Progress checkpoint</span>
+                                      </div>
+                                    ) : null}
+                                    {(message.messageType ?? "regular") ===
+                                    "tasks" ? (
+                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                        <ClipboardList className="size-3.5" />
+                                        <span>Task list</span>
+                                      </div>
+                                    ) : null}
+                                    {(message.messageType ?? "regular") ===
+                                    "warning" ? (
+                                      <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-500">
+                                        <AlertTriangle className="size-3.5" />
+                                        <span>Warning</span>
+                                      </div>
+                                    ) : null}
+                                    {(message.messageType ?? "regular") ===
+                                    "code" ? (
+                                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                        <Code2 className="size-3.5" />
+                                        <span>Code block</span>
+                                      </div>
+                                    ) : null}
+                                    {renderAssistantMessage(message)}
+                                  </div>
                                 </div>
                               ) : (
-                                <p className="text-xs leading-relaxed">
+                                <p className="text-sm leading-relaxed break-words">
                                   {message.text}
                                 </p>
                               )}
@@ -1319,13 +1333,16 @@ export default function Home() {
                           </div>
                         ))}
                         {composerLoading && (
-                          <div className="flex items-start gap-2">
-                            <Avatar>
-                              <AvatarFallback>AI</AvatarFallback>
+                          <div className="flex items-end gap-3 w-full">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                AI
+                              </AvatarFallback>
                             </Avatar>
-                            <div className="grid gap-2 rounded-lg border border-border/70 bg-card px-3 py-2">
-                              <Skeleton className="h-2 w-44" />
-                              <Skeleton className="h-2 w-36" />
+                            <div className="rounded-2xl border border-border/70 bg-card px-4 py-2.5 rounded-bl-none flex gap-1">
+                              <Skeleton className="h-2 w-2 rounded-full" />
+                              <Skeleton className="h-2 w-2 rounded-full" />
+                              <Skeleton className="h-2 w-2 rounded-full" />
                             </div>
                           </div>
                         )}
@@ -1347,10 +1364,7 @@ export default function Home() {
                       disabled={composerLoading}
                       aria-label="Message composer"
                     />
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] text-muted-foreground">
-                        Validation: minimum 4 characters.
-                      </p>
+                    <div className="flex items-center justify-end">
                       <Button type="submit" disabled={composerLoading}>
                         {composerLoading ? (
                           <Loader2 className="animate-spin" />
