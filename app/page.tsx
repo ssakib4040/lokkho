@@ -18,6 +18,8 @@ import {
   ListTodo,
   LogOut,
   Loader2,
+  Monitor,
+  Moon,
   Play,
   Plus,
   RefreshCcw,
@@ -26,6 +28,7 @@ import {
   Settings,
   Sparkles,
   StopCircle,
+  Sun,
   Trash2,
   Upload,
   UserCircle2,
@@ -33,6 +36,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +56,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -205,6 +211,7 @@ function buildAgentMessages(
 }
 
 export default function Home() {
+  const { theme, setTheme } = useTheme();
   // Top-level workspace controls and global UI modes.
   const [model, setModel] = useState<ModelName>("GPT-5.3-Codex");
   const [range, setRange] = useState<TimeRange>("7d");
@@ -713,6 +720,14 @@ export default function Home() {
     });
   };
 
+  const setThemeMode = (nextTheme: "system" | "light" | "dark") => {
+    setTheme(nextTheme);
+    pushActivity(`Theme changed to ${nextTheme}`, "ops");
+    toast.success("Theme updated", {
+      description: `Using ${nextTheme} mode`,
+    });
+  };
+
   const getTypeBadge = (type: AgentMessageType | undefined) => {
     const value = type ?? "regular";
     return (
@@ -959,6 +974,27 @@ export default function Home() {
                     Preferences
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup
+                    value={theme ?? "system"}
+                    onValueChange={(value) =>
+                      setThemeMode(value as "system" | "light" | "dark")
+                    }
+                  >
+                    <DropdownMenuRadioItem value="system">
+                      <Monitor />
+                      System
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="light">
+                      <Sun />
+                      Light
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="dark">
+                      <Moon />
+                      Dark
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
                     onSelect={() => {
@@ -1093,7 +1129,10 @@ export default function Home() {
             </CardHeader>
 
             <CardContent className="flex min-h-0 flex-1 flex-col">
-              <Tabs defaultValue="assistant" className="flex min-h-0 flex-1 w-full">
+              <Tabs
+                defaultValue="assistant"
+                className="flex min-h-0 flex-1 w-full"
+              >
                 <TabsList className="w-full justify-start overflow-auto">
                   <TabsTrigger value="assistant">
                     <Bot />
@@ -1114,7 +1153,10 @@ export default function Home() {
                 </TabsList>
 
                 {/* Assistant tab: mixed typed chat messages and composer. */}
-                <TabsContent value="assistant" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
+                <TabsContent
+                  value="assistant"
+                  className="mt-3 flex min-h-0 flex-1 flex-col gap-3"
+                >
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -1252,7 +1294,10 @@ export default function Home() {
                 </TabsContent>
 
                 {/* Knowledge tab: document ingest, indexing and item management. */}
-                <TabsContent value="knowledge" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
+                <TabsContent
+                  value="knowledge"
+                  className="mt-3 flex min-h-0 flex-1 flex-col gap-3"
+                >
                   <form
                     className="grid gap-2 md:grid-cols-[1fr_auto]"
                     onSubmit={addDocument}
