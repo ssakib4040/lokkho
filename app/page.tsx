@@ -2,13 +2,20 @@
 
 import { useMemo, useState } from "react";
 import {
+  AlertTriangle,
   Bot,
   Brain,
   CheckCircle2,
+  CircleCheck,
+  ClipboardList,
+  Code2,
   Clock3,
   CreditCard,
   Database,
   FilePlus2,
+  FileText,
+  Gauge,
+  ListTodo,
   LogOut,
   Loader2,
   Play,
@@ -80,6 +87,7 @@ import type {
   DocumentItem,
   MemoryItem,
   ModelName,
+  AgentMessageType,
   TimeRange,
   UsageStats,
   WorkspaceFormState,
@@ -110,11 +118,99 @@ function simulateAssistant(prompt: string): string {
   return "Scope looks strong. Next step is a vertical slice: one chat flow, one memory CRUD path, and one analytics report with real data.";
 }
 
+function buildAgentMessages(
+  prompt: string,
+): Array<Omit<ChatMessage, "id" | "role">> {
+  const answer = simulateAssistant(prompt);
+  const base: Array<Omit<ChatMessage, "id" | "role">> = [
+    {
+      text: answer,
+      messageType: "regular",
+    },
+    {
+      text: "Execution status updated.",
+      messageType: "status",
+    },
+    {
+      text: "Task: finalize workspace role permissions matrix.",
+      messageType: "task",
+    },
+    {
+      text: "Delivery progress is currently healthy.",
+      messageType: "progress",
+      progress: {
+        label: "MVP completion",
+        value: 62,
+        eta: "ETA 4 days",
+      },
+    },
+    {
+      text: "Next tasks to unblock release",
+      messageType: "tasks",
+      tasks: [
+        { id: "t-1", label: "Finalize onboarding flow", done: true },
+        { id: "t-2", label: "Add usage quota warnings", done: false },
+        { id: "t-3", label: "Ship billing settings page", done: false },
+      ],
+    },
+    {
+      text: "Recommended decision",
+      messageType: "decision",
+      bullets: [
+        "Keep chat + memory as first-class navigation items",
+        "Gate automation templates by workspace plan",
+        "Introduce role-based approval for production agents",
+      ],
+    },
+  ];
+
+  if (prompt.toLowerCase().includes("error")) {
+    base.push({
+      text: "Potential risks detected in this plan.",
+      messageType: "warning",
+      bullets: [
+        "No retry policy defined for failed jobs",
+        "Missing analytics event for automation stop actions",
+      ],
+    });
+  }
+
+  if (
+    prompt.toLowerCase().includes("code") ||
+    prompt.toLowerCase().includes("api")
+  ) {
+    base.push({
+      text: "Example contract payload",
+      messageType: "code",
+      code: `{
+  "workspaceId": "wk_123",
+  "conversationId": "conv_456",
+  "messageType": "progress",
+  "status": "running"
+}`,
+    });
+  }
+
+  base.push({
+    text: "Summary",
+    messageType: "summary",
+    bullets: [
+      "You now have rich message UI types",
+      "Agent outputs can mix status, progress, and tasks",
+      "The same pipeline can later map directly to backend events",
+    ],
+  });
+
+  return base;
+}
+
 export default function Home() {
+  // Top-level workspace controls and global UI modes.
   const [model, setModel] = useState<ModelName>("GPT-5.3-Codex");
   const [range, setRange] = useState<TimeRange>("7d");
   const [profileBusy, setProfileBusy] = useState<boolean>(false);
 
+  // Header sheet form state for creating a workspace.
   const [workspaceOpen, setWorkspaceOpen] = useState<boolean>(false);
   const [workspaceLoading, setWorkspaceLoading] = useState<boolean>(false);
   const [workspaceForm, setWorkspaceForm] = useState<WorkspaceFormState>({
@@ -122,6 +218,7 @@ export default function Home() {
     slug: "",
   });
 
+  // Conversation and composer state used by the Assistant tab.
   const [conversations, setConversations] = useState<Conversation[]>([
     {
       id: "conv-1",
@@ -131,6 +228,87 @@ export default function Home() {
           id: "msg-1",
           role: "assistant",
           text: "I can help you scope your OpenClaw alternative. Focus on chat, memory, and team workflows first.",
+          messageType: "regular",
+        },
+        {
+          id: "msg-2",
+          role: "assistant",
+          text: "Planning status",
+          messageType: "status",
+        },
+        {
+          id: "msg-3",
+          role: "assistant",
+          text: "Roadmap execution",
+          messageType: "progress",
+          progress: {
+            label: "Core UI completion",
+            value: 74,
+            eta: "ETA 3 days",
+          },
+        },
+        {
+          id: "msg-3b",
+          role: "assistant",
+          text: "Task: finalize Cosmos DB partition key strategy.",
+          messageType: "task",
+        },
+        {
+          id: "msg-4",
+          role: "assistant",
+          text: "Immediate action items",
+          messageType: "tasks",
+          tasks: [
+            { id: "seed-t-1", label: "Finalize top bar actions", done: true },
+            {
+              id: "seed-t-2",
+              label: "Implement message type renderer",
+              done: true,
+            },
+            { id: "seed-t-3", label: "Add backend adapter stubs", done: false },
+          ],
+        },
+        {
+          id: "msg-5",
+          role: "assistant",
+          text: "Recommendation",
+          messageType: "decision",
+          bullets: [
+            "Separate UI state from transport payloads",
+            "Track every agent response as typed event",
+            "Keep one reusable message renderer component",
+          ],
+        },
+        {
+          id: "msg-6",
+          role: "assistant",
+          text: "Potential release blocker",
+          messageType: "warning",
+          bullets: [
+            "No optimistic rollback flow defined yet",
+            "Automation failures need retry telemetry",
+          ],
+        },
+        {
+          id: "msg-7",
+          role: "assistant",
+          text: "Message contract preview",
+          messageType: "code",
+          code: `{
+  "type": "tasks",
+  "tasks": [{ "label": "Ship profile menu", "done": true }]
+}`,
+        },
+        {
+          id: "msg-8",
+          role: "assistant",
+          text: "Thread summary",
+          messageType: "summary",
+          bullets: [
+            "Multiple message types are now supported",
+            "Agent outputs can be rich and structured",
+            "UI is prepared for real backend events",
+          ],
         },
       ],
     },
@@ -140,6 +318,7 @@ export default function Home() {
   const [composer, setComposer] = useState<string>("");
   const [composerLoading, setComposerLoading] = useState<boolean>(false);
 
+  // Memory panel state (right rail).
   const [memories, setMemories] = useState<MemoryItem[]>([
     {
       id: "mem-1",
@@ -153,6 +332,7 @@ export default function Home() {
   const [memoryInput, setMemoryInput] = useState<string>("");
   const [memoryLoading, setMemoryLoading] = useState<boolean>(false);
 
+  // Knowledge base state (documents and indexing simulation).
   const [documents, setDocuments] = useState<DocumentItem[]>([
     { id: "doc-1", title: "Product-Brief-v2.pdf", chunks: 84, status: "ready" },
     { id: "doc-2", title: "Support-SOP.md", chunks: 29, status: "indexing" },
@@ -160,6 +340,7 @@ export default function Home() {
   const [documentInput, setDocumentInput] = useState<string>("");
   const [documentLoading, setDocumentLoading] = useState<boolean>(false);
 
+  // Automation jobs displayed in the Automation tab.
   const [jobs, setJobs] = useState<AgentJob[]>([
     {
       id: "job-1",
@@ -182,6 +363,7 @@ export default function Home() {
   ]);
   const [jobLoadingId, setJobLoadingId] = useState<string | null>(null);
 
+  // Analytics KPIs and refresh state.
   const [usageStats, setUsageStats] = useState<UsageStats>({
     tokens: 118420,
     requests: 932,
@@ -190,6 +372,7 @@ export default function Home() {
   });
   const [usageLoading, setUsageLoading] = useState<boolean>(false);
 
+  // Global activity feed shown in the right rail.
   const [activity, setActivity] = useState<ActivityItem[]>([
     {
       id: "act-1",
@@ -294,20 +477,22 @@ export default function Home() {
       return;
     }
 
-    const assistantMessage: ChatMessage = {
-      id: makeId("msg"),
-      role: "assistant",
-      text: simulateAssistant(trimmed),
-    };
+    const assistantMessages: ChatMessage[] = buildAgentMessages(trimmed).map(
+      (message) => ({
+        ...message,
+        id: makeId("msg"),
+        role: "assistant",
+      }),
+    );
 
     setConversationMessages(activeConversation.id, [
       ...nextMessages,
-      assistantMessage,
+      ...assistantMessages,
     ]);
     setComposerLoading(false);
     pushActivity(`Assistant replied using ${model}`, "chat");
     toast.success("Response generated", {
-      description: `Model: ${model}`,
+      description: `Model: ${model} | ${assistantMessages.length} message blocks`,
     });
   };
 
@@ -528,9 +713,107 @@ export default function Home() {
     });
   };
 
+  const getTypeBadge = (type: AgentMessageType | undefined) => {
+    const value = type ?? "regular";
+    return (
+      <Badge variant="outline" className="capitalize">
+        {value}
+      </Badge>
+    );
+  };
+
+  const renderAssistantMessage = (message: ChatMessage) => {
+    const type = message.messageType ?? "regular";
+
+    // Progress messages render metric + bar.
+    if (type === "progress" && message.progress) {
+      return (
+        <div className="space-y-2 text-xs leading-relaxed">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-medium">{message.progress.label}</p>
+            <p className="text-muted-foreground">{message.progress.value}%</p>
+          </div>
+          <Progress value={message.progress.value} />
+          {message.progress.eta ? (
+            <p className="text-[11px] text-muted-foreground">
+              {message.progress.eta}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
+    // Tasks messages render checklist rows.
+    if (type === "tasks" && message.tasks) {
+      return (
+        <div className="space-y-2">
+          <p className="text-xs font-medium">{message.text}</p>
+          <div className="grid gap-1.5">
+            {message.tasks.map((task) => (
+              <div key={task.id} className="flex items-center gap-2 text-xs">
+                {task.done ? (
+                  <CircleCheck className="size-3.5 text-emerald-500" />
+                ) : (
+                  <Clock3 className="size-3.5 text-amber-500" />
+                )}
+                <span
+                  className={
+                    task.done
+                      ? "text-muted-foreground line-through"
+                      : "text-foreground"
+                  }
+                >
+                  {task.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    // Code messages render a preformatted snippet.
+    if (type === "code" && message.code) {
+      return (
+        <div className="space-y-2">
+          <p className="text-xs font-medium">{message.text}</p>
+          <pre className="overflow-x-auto rounded-md border border-border/70 bg-background p-2 text-[11px] leading-relaxed">
+            <code>{message.code}</code>
+          </pre>
+        </div>
+      );
+    }
+
+    // Decision/summary/warning messages render bullet lists.
+    if (
+      (type === "decision" || type === "summary" || type === "warning") &&
+      message.bullets
+    ) {
+      return (
+        <div className="space-y-2">
+          <p className="text-xs font-medium">{message.text}</p>
+          <ul className="grid gap-1 text-xs text-muted-foreground">
+            {message.bullets.map((bullet, index) => (
+              <li
+                key={`${message.id}-bullet-${index}`}
+                className="flex items-start gap-2"
+              >
+                <span className="mt-1 block size-1.5 rounded-full bg-primary/70" />
+                <span>{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    return <p className="text-xs leading-relaxed">{message.text}</p>;
+  };
+
   return (
     <div className="h-screen bg-[radial-gradient(70%_120%_at_15%_10%,hsl(var(--chart-1)/0.2),transparent_55%),radial-gradient(80%_110%_at_85%_5%,hsl(var(--chart-2)/0.18),transparent_45%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--secondary)/0.45))]">
       <div className="flex h-full w-full flex-col gap-4 p-4 md:p-5">
+        {/* Top command/header bar: quick actions, workspace creation, profile menu. */}
         <Card className="border-border/70 bg-card/85 shadow-sm backdrop-blur-md">
           <CardContent className="flex flex-col gap-1.5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
@@ -696,7 +979,9 @@ export default function Home() {
           </CardContent>
         </Card>
 
+        {/* Main application shell: left sidebar, center workspace, right rail. */}
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[260px_1fr_330px]">
+          {/* Left sidebar: sessions + prompt starters. */}
           <Card className="h-full border-border/70 bg-card/86 backdrop-blur-md">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -752,6 +1037,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
+          {/* Center column: primary tabbed workspace surface. */}
           <Card className="h-full border-border/70 bg-card/90 shadow-sm backdrop-blur-md">
             <CardHeader className="pb-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -827,6 +1113,7 @@ export default function Home() {
                   </TabsTrigger>
                 </TabsList>
 
+                {/* Assistant tab: mixed typed chat messages and composer. */}
                 <TabsContent value="assistant" className="mt-3 space-y-3">
                   <div className="flex items-center gap-2">
                     <Button
@@ -857,12 +1144,65 @@ export default function Home() {
                               </AvatarFallback>
                             </Avatar>
                             <div className="rounded-lg border border-border/70 bg-card px-3 py-2">
-                              <p className="mb-1 text-[11px] uppercase tracking-wide text-muted-foreground">
-                                {message.role}
-                              </p>
-                              <p className="text-xs leading-relaxed">
-                                {message.text}
-                              </p>
+                              <div className="mb-2 flex items-center gap-2">
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                  {message.role}
+                                </p>
+                                {message.role === "assistant"
+                                  ? getTypeBadge(message.messageType)
+                                  : null}
+                              </div>
+                              {message.role === "assistant" ? (
+                                <div className="grid gap-2">
+                                  {(message.messageType ?? "regular") ===
+                                  "regular" ? (
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                      <FileText className="size-3.5" />
+                                      <span>Regular response</span>
+                                    </div>
+                                  ) : null}
+                                  {(message.messageType ?? "regular") ===
+                                  "task" ? (
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                      <ListTodo className="size-3.5" />
+                                      <span>Single task update</span>
+                                    </div>
+                                  ) : null}
+                                  {(message.messageType ?? "regular") ===
+                                  "progress" ? (
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                      <Gauge className="size-3.5" />
+                                      <span>Progress checkpoint</span>
+                                    </div>
+                                  ) : null}
+                                  {(message.messageType ?? "regular") ===
+                                  "tasks" ? (
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                      <ClipboardList className="size-3.5" />
+                                      <span>Task list</span>
+                                    </div>
+                                  ) : null}
+                                  {(message.messageType ?? "regular") ===
+                                  "warning" ? (
+                                    <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-500">
+                                      <AlertTriangle className="size-3.5" />
+                                      <span>Warning</span>
+                                    </div>
+                                  ) : null}
+                                  {(message.messageType ?? "regular") ===
+                                  "code" ? (
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                      <Code2 className="size-3.5" />
+                                      <span>Code block</span>
+                                    </div>
+                                  ) : null}
+                                  {renderAssistantMessage(message)}
+                                </div>
+                              ) : (
+                                <p className="text-xs leading-relaxed">
+                                  {message.text}
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -911,6 +1251,7 @@ export default function Home() {
                   </form>
                 </TabsContent>
 
+                {/* Knowledge tab: document ingest, indexing and item management. */}
                 <TabsContent value="knowledge" className="mt-3 space-y-3">
                   <form
                     className="grid gap-2 md:grid-cols-[1fr_auto]"
@@ -979,6 +1320,7 @@ export default function Home() {
                   </ScrollArea>
                 </TabsContent>
 
+                {/* Automation tab: agent job lifecycle and progress controls. */}
                 <TabsContent value="automation" className="mt-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">
@@ -1039,6 +1381,7 @@ export default function Home() {
                   </div>
                 </TabsContent>
 
+                {/* Analytics tab: KPI cards with range-based refresh simulation. */}
                 <TabsContent value="analytics" className="mt-3 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Select
@@ -1102,6 +1445,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
+          {/* Right rail: user memory and activity timeline. */}
           <Card className="h-full border-border/70 bg-card/88 backdrop-blur-md">
             <CardHeader>
               <CardTitle className="text-sm">Memory + Activity</CardTitle>
