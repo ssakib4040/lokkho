@@ -1092,8 +1092,8 @@ export default function Home() {
               </div>
             </CardHeader>
 
-            <CardContent>
-              <Tabs defaultValue="assistant" className="w-full">
+            <CardContent className="flex min-h-0 flex-1 flex-col">
+              <Tabs defaultValue="assistant" className="flex min-h-0 flex-1 w-full">
                 <TabsList className="w-full justify-start overflow-auto">
                   <TabsTrigger value="assistant">
                     <Bot />
@@ -1114,7 +1114,7 @@ export default function Home() {
                 </TabsList>
 
                 {/* Assistant tab: mixed typed chat messages and composer. */}
-                <TabsContent value="assistant" className="mt-3 space-y-3">
+                <TabsContent value="assistant" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -1129,7 +1129,7 @@ export default function Home() {
                     </Button>
                   </div>
 
-                  <ScrollArea className="h-[40vh] rounded-lg border border-border/70 bg-background/70 p-3">
+                  <ScrollArea className="min-h-0 flex-1 rounded-lg border border-border/70 bg-background/70 p-3">
                     {activeConversation &&
                     activeConversation.messages.length > 0 ? (
                       <div className="grid gap-3">
@@ -1252,7 +1252,7 @@ export default function Home() {
                 </TabsContent>
 
                 {/* Knowledge tab: document ingest, indexing and item management. */}
-                <TabsContent value="knowledge" className="mt-3 space-y-3">
+                <TabsContent value="knowledge" className="mt-3 flex min-h-0 flex-1 flex-col gap-3">
                   <form
                     className="grid gap-2 md:grid-cols-[1fr_auto]"
                     onSubmit={addDocument}
@@ -1272,7 +1272,7 @@ export default function Home() {
                       {documentLoading ? "Uploading..." : "Upload"}
                     </Button>
                   </form>
-                  <ScrollArea className="h-[45vh] rounded-lg border border-border/70 p-2">
+                  <ScrollArea className="min-h-0 flex-1 rounded-lg border border-border/70 p-2">
                     <div className="grid gap-2">
                       {documents.map((doc) => (
                         <Card
