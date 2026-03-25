@@ -904,7 +904,9 @@ export default function Home() {
                 <Rocket className="size-3.5" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Uccho AI Command Center</p>
+                <p className="text-sm font-semibold">
+                  lokkho AI Command Center
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Professional OpenClaw-style workspace prototype
                 </p>

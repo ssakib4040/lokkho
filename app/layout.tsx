@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Uccho AI Workspace",
+  title: "lokkho AI Workspace",
   description: "Interactive frontend prototype for an AI workspace platform",
 };
 
