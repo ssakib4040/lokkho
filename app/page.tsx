@@ -6,24 +6,28 @@ import {
   Brain,
   CheckCircle2,
   Clock3,
+  CreditCard,
   Database,
   FilePlus2,
+  LogOut,
   Loader2,
   Play,
   Plus,
   RefreshCcw,
   Rocket,
   Search,
+  Settings,
   Sparkles,
   StopCircle,
   Trash2,
   Upload,
+  UserCircle2,
   Wand2,
   Workflow,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +40,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -101,6 +113,7 @@ function simulateAssistant(prompt: string): string {
 export default function Home() {
   const [model, setModel] = useState<ModelName>("GPT-5.3-Codex");
   const [range, setRange] = useState<TimeRange>("7d");
+  const [profileBusy, setProfileBusy] = useState<boolean>(false);
 
   const [workspaceOpen, setWorkspaceOpen] = useState<boolean>(false);
   const [workspaceLoading, setWorkspaceLoading] = useState<boolean>(false);
@@ -493,6 +506,28 @@ export default function Home() {
     });
   };
 
+  const openProfileArea = (area: "account" | "billing" | "preferences") => {
+    const labelMap: Record<typeof area, string> = {
+      account: "Account profile",
+      billing: "Billing center",
+      preferences: "Preferences",
+    };
+    pushActivity(`Opened ${labelMap[area]}`, "ops");
+    toast.success(`${labelMap[area]} opened`, {
+      description: "This is a mock interaction for now.",
+    });
+  };
+
+  const signOut = async () => {
+    setProfileBusy(true);
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    setProfileBusy(false);
+    pushActivity("Signed out from workspace session", "ops");
+    toast.info("Signed out", {
+      description: "Mock sign-out completed.",
+    });
+  };
+
   return (
     <div className="h-screen bg-[radial-gradient(70%_120%_at_15%_10%,hsl(var(--chart-1)/0.2),transparent_55%),radial-gradient(80%_110%_at_85%_5%,hsl(var(--chart-2)/0.18),transparent_45%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--secondary)/0.45))]">
       <div className="flex h-full w-full flex-col gap-4 p-4 md:p-5">
@@ -596,6 +631,67 @@ export default function Home() {
                   </form>
                 </SheetContent>
               </Sheet>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="default"
+                    variant="outline"
+                    className="h-8 gap-2 rounded-full border-border/70 bg-background pl-1 pr-2.5"
+                    disabled={profileBusy}
+                  >
+                    <Avatar className="size-6 ring-1 ring-border/70">
+                      <AvatarImage
+                        src="https://api.dicebear.com/9.x/initials/svg?seed=Sakib"
+                        alt="Sakib profile"
+                      />
+                      <AvatarFallback>SS</AvatarFallback>
+                    </Avatar>
+                    <span className="hidden text-xs sm:inline">Sakib</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-foreground">
+                        Sakib
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Founder Workspace
+                      </span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => openProfileArea("account")}>
+                    <UserCircle2 />
+                    Account
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => openProfileArea("billing")}>
+                    <CreditCard />
+                    Billing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => openProfileArea("preferences")}
+                  >
+                    <Settings />
+                    Preferences
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={() => {
+                      void signOut();
+                    }}
+                    disabled={profileBusy}
+                  >
+                    {profileBusy ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <LogOut />
+                    )}
+                    {profileBusy ? "Signing out..." : "Sign out"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardContent>
         </Card>
