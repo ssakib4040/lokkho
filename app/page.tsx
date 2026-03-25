@@ -7,17 +7,13 @@ import {
   Bot,
   Brain,
   CheckCircle2,
-  Check,
-  CheckCheck,
   CircleCheck,
   ClipboardList,
   Code2,
   Clock3,
-  Copy,
   CreditCard,
   Database,
   FilePlus2,
-  FileText,
   Gauge,
   ListTodo,
   LogOut,
@@ -30,7 +26,6 @@ import {
   Rocket,
   Search,
   Settings,
-  Smile,
   Sparkles,
   StopCircle,
   Sun,
@@ -179,10 +174,6 @@ function buildAgentMessages(
       messageType: "regular",
     },
     {
-      text: "Execution status updated.",
-      messageType: "status",
-    },
-    {
       text: "Task: finalize workspace role permissions matrix.",
       messageType: "task",
     },
@@ -237,7 +228,7 @@ function buildAgentMessages(
   "workspaceId": "wk_123",
   "conversationId": "conv_456",
   "messageType": "progress",
-  "status": "running"
+  "state": "running"
 }`,
     });
   }
@@ -247,7 +238,7 @@ function buildAgentMessages(
     messageType: "summary",
     bullets: [
       "You now have rich message UI types",
-      "Agent outputs can mix status, progress, and tasks",
+      "Agent outputs can mix progress, tasks, and decisions",
       "The same pipeline can later map directly to backend events",
     ],
   });
@@ -283,18 +274,21 @@ export default function Home() {
           role: "assistant",
           text: "I can help you scope your OpenClaw alternative. Focus on chat, memory, and team workflows first.",
           messageType: "regular",
+          timestamp: new Date("2026-03-26T09:02:00.000Z"),
         },
         {
           id: "msg-2",
           role: "assistant",
-          text: "Planning status",
-          messageType: "status",
+          text: "Planning update",
+          messageType: "task",
+          timestamp: new Date("2026-03-26T09:08:00.000Z"),
         },
         {
           id: "msg-3",
           role: "assistant",
           text: "Roadmap execution",
           messageType: "progress",
+          timestamp: new Date("2026-03-26T09:12:00.000Z"),
           progress: {
             label: "Core UI completion",
             value: 74,
@@ -306,12 +300,14 @@ export default function Home() {
           role: "assistant",
           text: "Task: finalize Cosmos DB partition key strategy.",
           messageType: "task",
+          timestamp: new Date("2026-03-26T09:18:00.000Z"),
         },
         {
           id: "msg-4",
           role: "assistant",
           text: "Immediate action items",
           messageType: "tasks",
+          timestamp: new Date("2026-03-26T09:24:00.000Z"),
           tasks: [
             { id: "seed-t-1", label: "Finalize top bar actions", done: true },
             {
@@ -327,6 +323,7 @@ export default function Home() {
           role: "assistant",
           text: "Recommendation",
           messageType: "decision",
+          timestamp: new Date("2026-03-26T09:32:00.000Z"),
           bullets: [
             "Separate UI state from transport payloads",
             "Track every agent response as typed event",
@@ -338,6 +335,7 @@ export default function Home() {
           role: "assistant",
           text: "Potential release blocker",
           messageType: "warning",
+          timestamp: new Date("2026-03-26T09:40:00.000Z"),
           bullets: [
             "No optimistic rollback flow defined yet",
             "Automation failures need retry telemetry",
@@ -348,6 +346,7 @@ export default function Home() {
           role: "assistant",
           text: "Message contract preview",
           messageType: "code",
+          timestamp: new Date("2026-03-26T09:46:00.000Z"),
           code: `{
   "type": "tasks",
   "tasks": [{ "label": "Ship profile menu", "done": true }]
@@ -358,6 +357,7 @@ export default function Home() {
           role: "assistant",
           text: "Thread summary",
           messageType: "summary",
+          timestamp: new Date("2026-03-26T09:52:00.000Z"),
           bullets: [
             "Multiple message types are now supported",
             "Agent outputs can be rich and structured",
@@ -805,29 +805,23 @@ export default function Home() {
     );
   };
 
+  const shouldShowTypeBadge = (type: AgentMessageType | undefined) => {
+    const value = type ?? "regular";
+    return value !== "regular" && value !== "status";
+  };
+
   // Helper: Format time ago (e.g., "2m ago", "5s ago")
   const formatTimeAgo = (date: Date | undefined): string => {
     if (!date) return "just now";
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
+
+    // Guard against future timestamps or clock skew to avoid values like -39023s ago.
+    if (seconds <= 0) return "just now";
+    if (seconds < 45) return "just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return date.toLocaleDateString();
-  };
-
-  // Helper: Get status icon
-  const getStatusIcon = (status: "sent" | "delivered" | "read" | undefined) => {
-    switch (status) {
-      case "read":
-        return <CheckCheck className="w-3.5 h-3.5 text-blue-500" />;
-      case "delivered":
-        return <Check className="w-3.5 h-3.5 text-gray-400" />;
-      case "sent":
-        return <Clock3 className="w-3.5 h-3.5 text-gray-300" />;
-      default:
-        return null;
-    }
   };
 
   const renderAssistantMessage = (message: ChatMessage) => {
@@ -1300,16 +1294,9 @@ export default function Home() {
                             index > 0
                               ? activeConversation.messages[index - 1]
                               : undefined;
-                          const nextMessage =
-                            index < activeConversation.messages.length - 1
-                              ? activeConversation.messages[index + 1]
-                              : undefined;
                           const showAvatar =
                             message.role === "assistant" &&
                             previousMessage?.role !== "assistant";
-                          const isLastFromRole =
-                            !nextMessage || nextMessage.role !== message.role;
-
                           return (
                             <div
                               key={message.id}
@@ -1330,11 +1317,11 @@ export default function Home() {
                                   <div className="w-8" />
                                 ) : null}
 
-                                <div className="flex max-w-[75%] flex-col gap-1.5">
+                                <div className="flex max-w-[78%] flex-col gap-1.5">
                                   <div
                                     className={`relative rounded-2xl px-4 py-2.5 transition-all ${
                                       message.role === "user"
-                                        ? "rounded-br-none bg-primary text-primary-foreground shadow-sm"
+                                        ? "rounded-br-none bg-primary text-primary-foreground shadow-md"
                                         : "rounded-bl-none border border-border/70 bg-card shadow-sm"
                                     }`}
                                   >
@@ -1344,16 +1331,11 @@ export default function Home() {
                                           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                                             Assistant
                                           </p>
-                                          {getTypeBadge(message.messageType)}
+                                          {shouldShowTypeBadge(message.messageType)
+                                            ? getTypeBadge(message.messageType)
+                                            : null}
                                         </div>
                                         <div className="grid gap-2">
-                                          {(message.messageType ??
-                                            "regular") === "regular" ? (
-                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                              <FileText className="size-3.5" />
-                                              <span>Regular response</span>
-                                            </div>
-                                          ) : null}
                                           {(message.messageType ??
                                             "regular") === "task" ? (
                                             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -1400,40 +1382,6 @@ export default function Home() {
                                   </div>
 
                                   <div
-                                    className={`flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 ${
-                                      message.role === "user"
-                                        ? "justify-end"
-                                        : ""
-                                    }`}
-                                  >
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(
-                                          message.text,
-                                        );
-                                        toast.success("Copied message");
-                                      }}
-                                    >
-                                      <Copy className="size-3.5" />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6"
-                                      onClick={() =>
-                                        toast.success("Reaction added: 👍")
-                                      }
-                                    >
-                                      <Smile className="size-3.5" />
-                                    </Button>
-                                  </div>
-
-                                  <div
                                     className={`flex items-center gap-1 text-[11px] text-muted-foreground ${
                                       message.role === "user"
                                         ? "justify-end"
@@ -1443,14 +1391,6 @@ export default function Home() {
                                     <span>
                                       {formatTimeAgo(message.timestamp)}
                                     </span>
-                                    {message.role === "user" &&
-                                    isLastFromRole ? (
-                                      <>
-                                        <span>•</span>
-                                        {getStatusIcon(message.status)}
-                                        <span>{message.status ?? "sent"}</span>
-                                      </>
-                                    ) : null}
                                   </div>
                                 </div>
                               </div>
