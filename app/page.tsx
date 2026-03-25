@@ -3,19 +3,15 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   Bot,
   Brain,
   CheckCircle2,
   CircleCheck,
-  ClipboardList,
-  Code2,
   Clock3,
   CreditCard,
   Database,
   FilePlus2,
   Gauge,
-  ListTodo,
   LogOut,
   Loader2,
   Monitor,
@@ -93,7 +89,6 @@ import type {
   DocumentItem,
   MemoryItem,
   ModelName,
-  AgentMessageType,
   TimeRange,
   UsageStats,
   WorkspaceFormState,
