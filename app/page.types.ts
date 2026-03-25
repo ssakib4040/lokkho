@@ -85,3 +85,22 @@ export interface WorkspaceFormState {
   name: string;
   slug: string;
 }
+
+export interface AIModelConfig {
+  id: string;
+  modelName: ModelName;
+  provider: "OpenAI" | "Anthropic" | "Google" | "Meta" | "Other";
+  apiKey: string;
+  apiUrl?: string;
+  maxTokens?: number;
+  isActive: boolean;
+  createdAt: Date;
+}
+
+export interface AppSettings {
+  theme: "light" | "dark" | "system";
+  defaultModel?: ModelName;
+  maxContextWindow?: number;
+  autoSaveEnabled: boolean;
+  activityLoggingEnabled: boolean;
+}

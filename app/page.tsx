@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   Bot,
@@ -1036,6 +1037,19 @@ export default function Home() {
                       Dark
                     </DropdownMenuRadioItem>
                   </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <Link href="/config">
+                    <DropdownMenuItem>
+                      <Database className="w-4 h-4" />
+                      AI Models Configuration
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link href="/settings">
+                    <DropdownMenuItem>
+                      <Settings className="w-4 h-4" />
+                      Application Settings
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     variant="destructive"
