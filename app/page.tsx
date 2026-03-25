@@ -796,20 +796,6 @@ export default function Home() {
     });
   };
 
-  const getTypeBadge = (type: AgentMessageType | undefined) => {
-    const value = type ?? "regular";
-    return (
-      <Badge variant="outline" className="capitalize">
-        {value}
-      </Badge>
-    );
-  };
-
-  const shouldShowTypeBadge = (type: AgentMessageType | undefined) => {
-    const value = type ?? "regular";
-    return value !== "regular" && value !== "status";
-  };
-
   // Helper: Format time ago (e.g., "2m ago", "5s ago")
   const formatTimeAgo = (date: Date | undefined): string => {
     if (!date) return "just now";
@@ -1331,48 +1317,8 @@ export default function Home() {
                                           <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                                             Assistant
                                           </p>
-                                          {shouldShowTypeBadge(message.messageType)
-                                            ? getTypeBadge(message.messageType)
-                                            : null}
                                         </div>
-                                        <div className="grid gap-2">
-                                          {(message.messageType ??
-                                            "regular") === "task" ? (
-                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                              <ListTodo className="size-3.5" />
-                                              <span>Single task update</span>
-                                            </div>
-                                          ) : null}
-                                          {(message.messageType ??
-                                            "regular") === "progress" ? (
-                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                              <Gauge className="size-3.5" />
-                                              <span>Progress checkpoint</span>
-                                            </div>
-                                          ) : null}
-                                          {(message.messageType ??
-                                            "regular") === "tasks" ? (
-                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                              <ClipboardList className="size-3.5" />
-                                              <span>Task list</span>
-                                            </div>
-                                          ) : null}
-                                          {(message.messageType ??
-                                            "regular") === "warning" ? (
-                                            <div className="flex items-center gap-2 text-[11px] text-amber-600 dark:text-amber-500">
-                                              <AlertTriangle className="size-3.5" />
-                                              <span>Warning</span>
-                                            </div>
-                                          ) : null}
-                                          {(message.messageType ??
-                                            "regular") === "code" ? (
-                                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                                              <Code2 className="size-3.5" />
-                                              <span>Code block</span>
-                                            </div>
-                                          ) : null}
-                                          {renderAssistantMessage(message)}
-                                        </div>
+                                        {renderAssistantMessage(message)}
                                       </div>
                                     ) : (
                                       <p className="text-sm leading-relaxed break-words">
