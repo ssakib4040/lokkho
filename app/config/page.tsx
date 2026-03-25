@@ -22,11 +22,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -112,8 +109,8 @@ export default function ConfigPage() {
   const handleToggleActive = (id: string) => {
     setConfigs(
       configs.map((config) =>
-        config.id === id ? { ...config, isActive: !config.isActive } : config
-      )
+        config.id === id ? { ...config, isActive: !config.isActive } : config,
+      ),
     );
     toast.success("Model status updated");
   };
@@ -229,7 +226,12 @@ export default function ConfigPage() {
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        provider: value as "OpenAI" | "Anthropic" | "Google" | "Meta" | "Other",
+                        provider: value as
+                          | "OpenAI"
+                          | "Anthropic"
+                          | "Google"
+                          | "Meta"
+                          | "Other",
                       })
                     }
                   >
@@ -379,7 +381,7 @@ export default function ConfigPage() {
                             size="icon"
                             onClick={() =>
                               setShowKeyId(
-                                showKeyId === config.id ? null : config.id
+                                showKeyId === config.id ? null : config.id,
                               )
                             }
                             className="rounded-lg"
